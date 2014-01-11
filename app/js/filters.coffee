@@ -1,1 +1,1 @@
-angular.module('myApp.filters', [])
+angular.module('cate.filters', [])

@@ -1,10 +1,10 @@
 # Declare app level module which depends on filters, and services
-angular.module("myApp",
+angular.module("cate",
   [ "ngRoute",
-    "myApp.filters",
-    "myApp.services",
-    "myApp.directives",
-    "myApp.controllers"
+    "cate.filters",
+    "cate.services",
+    "cate.directives",
+    "cate.controllers"
   ])
   .config [ "$routeProvider", ($routeProvider) ->
     $routeProvider.when "/view1",

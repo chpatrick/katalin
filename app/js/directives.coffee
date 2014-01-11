@@ -1,1 +1,1 @@
-angular.module('myApp.directives', [])
+angular.module('cate.directives', [])

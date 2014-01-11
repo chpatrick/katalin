@@ -1,1 +1,1 @@
-angular.module('myApp.services', [])
+angular.module('cate.services', [])
