@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+
+  "name": "CATE 2",
+  "description": "The nice CATE wrapper.",
+  "version": "1.0",
+
+  "permissions": [
+    "https://cate.doc.ic.ac.uk/"
+  ],
+  "app": {
+    "launch": {
+      "local_path": "index.html"
+    }
+  }
+}
