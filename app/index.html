@@ -9,6 +9,8 @@
   <div ng-view></div>
 
   <div ng-controller="headerController">
+    <select ng-model="year" ng-options="year + '-' + (year * 1 + 1) for year in availableYears"></select>
+    <select ng-model="clazz" ng-options="class.code as class.name group by class.degree for class in availableClasses"></select>
   </div>
 
   <!-- In production use:
