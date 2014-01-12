@@ -94,5 +94,164 @@ class CateService
 
     @$q.when courses
 
+  monthNumbers =
+    'January': 1,
+    'February': 2,
+    'March': 3,
+    'April': 4,
+    'May': 5,
+    'June': 6,
+    'July': 7,
+    'August': 8,
+    'September': 9,
+    'October': 10,
+    'November': 11,
+    'December': 12
+
+  parseTimetablePage: (year, clazz, period) ->
+    service = this
+    service.getDefaultData().then (defaultData) ->
+      service.getPage('/timetable.cgi', {
+        period: period,
+        class: clazz,
+        keyt: "#{year}:none:none:#{defaultData.username}"
+      }).then (response) ->
+        doc = response.data
+
+        rows = $('body > table:first > tbody > tr', doc)
+
+        colMonth = null
+        colDay = null
+
+        courses = {}
+
+        rowNum = 0
+        while rowNum < rows.length
+          row = rows.eq rowNum
+
+          if not colMonth? and row.children().first().attr('colspan') == '4'
+            # found a month row
+            firstMonth = null
+            for monthCell, monthCellNum in $('th:gt(0)', row)
+              monthNum = monthNumbers[$(monthCell).text().trim()]
+              if monthNum?
+                firstMonth = monthNum - monthCellNum
+                break
+
+            colMonth = []
+            for monthCell, monthCellNum in $('th:gt(0)', row)
+              for i in [1..$(monthCell).attr('colspan')]
+                colMonth.push (firstMonth + monthCellNum)
+
+            # skip the week row to get to the day row
+            rowNum += 2
+            row = rows.eq rowNum
+
+            colDay = []
+            for dayCell in $('th:gt(0)', row)
+              dayText = $(dayCell).text()
+              colDay.push (if dayText isnt '' then dayText * 1 else null)
+          else
+            courseTitle = $('td[bgcolor="white"]:nth-child(2) > b:first-child', row).first()
+            if courseTitle.length
+              courseHeader = courseTitle.parent()
+              titleContents = courseTitle.contents()
+              course =
+                code: titleContents.eq(0).text()
+                title: titleContents.eq(1).text().substring(3)
+                notesUrl: courseHeader.find('a[href*="notes.cgi"]').attr('href')
+                events: {}
+
+              courseRowCount = courseHeader.attr('rowspan')
+              for courseRowNum in [0...courseRowCount]
+                courseCells = undefined
+                if courseRowNum == 0
+                  courseCells = row.children().slice(3)
+                else
+                  rowNum++
+                  row = rows.eq rowNum
+
+                  courseCells = row.children()
+
+                prevTermStartDay = null
+                if courseCells.first().find('img[src*="arrowredright"]')
+                  # first event continues from last term
+                  prevTermStartDay = new Date(courseCells.first().text())
+                
+                courseCells = courseCells.slice 1
+
+                nextTermEndDay = null
+                if courseCells.last().find('img[src*="arrowredright"]').length
+                  # last event continues next term
+                  nextTermEndDay = new Date(courseCells.last().text())
+                  courseCells = courseCells.slice 0, -1
+
+                colDate = (col) ->
+                  eventYear = year
+                  eventMonth = colMonth[col]
+                  if eventMonth > 12
+                    eventMonth -= 12
+                    eventYear++
+                  new Date eventYear, eventMonth - 1, colDay[col]
+
+                col = 0
+                courseCells.each (courseCellNum) ->
+                  colStart = col
+                  col += $(this).attr('colspan') * 1
+                  colEnd = col - 1
+
+                  if not $(this).is(':empty')
+                    event = {}
+
+                    event.start = if courseCellNum is 0 and prevTermStartDay?
+                      prevTermStartDay
+                    else
+                      colDate colStart
+
+                    event.end = if courseCellNum is courseCells.length - 1 and nextTermEndDay?
+                      nextTermEndDay
+                    else
+                      colDate colEnd
+
+                    eventInfo = $('> b:first-child', this)
+                    eventLink = $('> a[href*="showfile.cgi"]', this)
+                    eventText = $(this).contents().eq(1).text()
+
+                    eventInfoText = undefined
+                    if eventInfo.length
+                      eventInfoText = eventInfo.text()
+                      if eventLink.length
+                        event.title = eventLink.text()
+                      else if eventText != ''
+                        event.title = eventText.trim()
+                    else
+                      eventInfoText = eventLink.text()
+                    if eventLink.length
+                      event.specLink = eventLink.attr('href')
+
+                    [ event.index, event.type ] = eventInfoText.split(':')
+
+                    course.events[event.index] = event
+
+              courses[course.code] = course
+
+          rowNum++
+
+        courses
+
+  getCourses: (year, clazz) ->
+    @$q.all(@parseTimetablePage(year, clazz, period) for period in [1..7]).then (results) ->
+      courses = {}
+
+      for result in results
+        for courseCode, course of result
+          if courses[courseCode] # we already have this course, merge events
+            for eventIndex, event of course.events
+              courses[courseCode].events[eventIndex] = event
+          else
+            courses[courseCode] = course
+
+      courses
+
 angular.module('cate.services', [])
   .service('cateService', ['$http', '$q', CateService])

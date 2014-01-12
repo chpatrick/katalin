@@ -12,6 +12,11 @@ class HeaderController
     $scope.setMode = (mode) ->
       $scope.mode = mode
 
+class TimelineController
+  constructor: (@$routeParams, @cateService, @$scope) ->
+    @cateService.getCourses(@$routeParams.year, @$routeParams.clazz).then (courses) ->
+      console.log courses
 
 angular.module("cate.controllers", [])
   .controller("headerController", ['cateService', '$scope', HeaderController])
+  .controller("timelineController", ['$routeParams', 'cateService', '$scope', TimelineController])
