@@ -11,5 +11,9 @@ angular.module("cate",
       templateUrl: "partials/timeline.html"
       controller: "timelineController"
 
+    $routeProvider.when "/:year/:clazz/courses",
+      templateUrl: "partials/courses.html"
+      controller: "coursesController"
+
     $routeProvider.otherwise redirectTo: "/"
   ]
