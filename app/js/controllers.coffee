@@ -1,3 +1,7 @@
+class HeaderController
+  constructor: (@cateService) ->
+    @cateService.getDefaultData().then (data) ->
+      console.log data
+
 angular.module("cate.controllers", [])
-  .controller("MyCtrl1", [->])
-  .controller("MyCtrl2", [->])
+  .controller("headerController", ['cateService', HeaderController])
