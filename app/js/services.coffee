@@ -2,9 +2,8 @@ class CateService
   CATE_BASE = 'https://cate.doc.ic.ac.uk'
 
   constructor: (@$http, @$q) ->
-    console.log 'creating cate service'
-
     @defaultData = null
+    @cachedCourses = undefined
 
   getPage: (path, params) ->
     @$http
@@ -125,6 +124,8 @@ class CateService
 
         courses = {}
 
+        subscribed = true
+
         rowNum = 0
         while rowNum < rows.length
           row = rows.eq rowNum
@@ -151,15 +152,20 @@ class CateService
             for dayCell in $('th:gt(0)', row)
               dayText = $(dayCell).text()
               colDay.push (if dayText isnt '' then dayText * 1 else null)
+          else if row.text().indexOf('level 2 or higher') isnt -1
+            # found the subscribed courses separator
+            subscribed = false
           else
             courseTitle = $('td[bgcolor="white"]:nth-child(2) > b:first-child', row).first()
             if courseTitle.length
+              # found a course
               courseHeader = courseTitle.parent()
               titleContents = courseTitle.contents()
               course =
                 code: titleContents.eq(0).text()
                 title: titleContents.eq(1).text().substring(3)
                 notesUrl: courseHeader.find('a[href*="notes.cgi"]').attr('href')
+                subscribed: subscribed
                 events: {}
 
               courseRowCount = courseHeader.attr('rowspan')
@@ -240,18 +246,32 @@ class CateService
         courses
 
   getCourses: (year, clazz) ->
-    @$q.all(@parseTimetablePage(year, clazz, period) for period in [1..7]).then (results) ->
-      courses = {}
+    if @cachedCourses? and @cachedCourses.year is year and @cachedCourses.clazz is clazz
+      @$q.when @cachedCourses.courses
+    else
+      service = this
+      @$q.all(@parseTimetablePage(year, clazz, period) for period in [1..7]).then (results) ->
+        courses = {}
 
-      for result in results
-        for courseCode, course of result
-          if courses[courseCode] # we already have this course, merge events
-            for eventIndex, event of course.events
-              courses[courseCode].events[eventIndex] = event
-          else
-            courses[courseCode] = course
+        for result in results
+          for courseCode, course of result
+            if courses[courseCode] # we already have this course, merge events
+              for eventIndex, event of course.events
+                courses[courseCode].events[eventIndex] = event
+            else
+              courses[courseCode] = course
 
-      courses
+        service.cachedCourses =
+          year: year
+          clazz: clazz
+
+        # convert hashes to arrays
+        service.cachedCourses.courses = for courseCode, course of courses
+          arrayEvents = []
+          for eventIndex, event of course.events
+            arrayEvents.push event
+          course.events = arrayEvents
+          course
 
 angular.module('cate.services', [])
   .service('cateService', ['$http', '$q', CateService])

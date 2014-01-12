@@ -1,0 +1,7 @@
+<div>COURSES LOL</div>
+
+<div>
+  <div ng-repeat="(courseCode, course) in courses | orderBy:['-subscribed', 'title']">
+    {{ course.title }}
+  </div>
+</div>
