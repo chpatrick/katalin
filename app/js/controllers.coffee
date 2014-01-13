@@ -1,11 +1,12 @@
 HeaderController = (cateService, $scope, $location, $routeParams) ->
+    console.log 'creating header controller'
     cateService.getAvailableClasses().then (classes) ->
       $scope.availableClasses = classes
     cateService.getAvailableYears().then (availableYears) ->
       $scope.availableYears = availableYears
     $scope.$on '$routeChangeSuccess', ->
       if $location.path() is '/'
-        $scope.mode = 'timeline'
+        $scope.mode = 'courses'
         # get the current year/class
         cateService.getDefaultData().then (data) ->
           $scope.year = data.currentYear
@@ -24,10 +25,6 @@ HeaderController = (cateService, $scope, $location, $routeParams) ->
     $scope.setMode = (mode) ->
       $scope.mode = mode
 
-TimelineController = ($routeParams, cateService, $scope) ->
-  cateService.getCourses($routeParams.year, $routeParams.clazz).then (courses) ->
-    console.log courses
-
 CoursesController = ($routeParams, cateService, $scope) ->
   cateService.getCourses($routeParams.year, $routeParams.clazz).then (courses) ->
     $scope.year = $routeParams.year
@@ -40,45 +37,114 @@ CourseController = (cateService, $http, $scope) ->
     if course.notesUrl?
       cateService.getNotes($scope.$parent.year, course.notesUrl).then (notes) ->
         $scope.notes = notes
+        $scope.exercises = for event in course.events when event.specUrl?
+          title = event.title or (event.type + ' '+ + event.index)
+          {
+            index: event.index
+            title: title
+            filename: title + '.pdf'
+            downloadUrl: event.specUrl
+            type: 'pdf'
+          }
+
+DownloadsController = ($http, $scope) ->
+  course = $scope.course
+
+  $scope.downloadStatus = {}
+  setStatus = (item, status) -> ->
+    switch $scope.$root.$$phase
+      when '$apply', '$digest'
+        $scope.downloadStatus[item.index] = status
+      else
+        $scope.$apply ->
+          $scope.downloadStatus[item.index] = status
+
+  $scope.view = (item) ->
+    $http(
+      url: item.downloadUrl
+      method: 'GET'
+      responseType: 'blob')
+      .success (fileContents) ->
+        reader = new FileReader()
+        reader.onload = ->
+          webview = $('<webview></webview>')
+          webview.appendTo 'body'
+          webview.attr('src', reader.result)
+        reader.readAsDataURL fileContents
+
+  $scope.download = (item) ->
+    setStatus(item, 'downloading')()
+    error = setStatus item, 'failed'
+
+    $http(
+      url: item.downloadUrl
+      method: 'GET'
+      responseType: 'blob')
+      .success (fileContents, status, headers) ->
+        filename = if item.filename?
+          item.filename
+        else
+          disposition = headers('Content-Disposition')
+          filenameMatch = /^attachment; filename=\"(.+)\"$/.exec disposition
+          filenameMatch[1]
+        
+        chrome.fileSystem.chooseEntry { type: 'saveFile', suggestedName: filename}, (file) ->
+          file.createWriter ((writer) ->
+            writer.onerror = error
+            writer.onwrite = setStatus item, 'complete'
+            writer.write fileContents
+            ), error
+      .error error
+
   $scope.downloadAll = ->
     chrome.fileSystem.chooseEntry { type: 'openDirectory' }, (directory) ->
       maxIndex = undefined
-      for note in $scope.notes
-        if !maxIndex? or maxIndex < note.index 
-          maxIndex = note.index
+      for item in $scope.items
+        if !maxIndex? or maxIndex < item.index 
+          maxIndex = item.index
       digits = (maxIndex + '').length
 
-      for note in $scope.notes
-        do (note) ->
-          paddedIndex = note.index + ''
+      for item in $scope.items when item.downloadUrl?
+        do (item) ->
+          paddedIndex = item.index + ''
           paddedIndex = '0' + paddedIndex until paddedIndex.length == digits
 
-          errorHandler = ->
-            $scope.downloadStatus[note.index] = 'failed'
-
-          $scope.downloadStatus[note.index] = 'downloading'
+          setStatus(item, 'downloading')()
+          error = setStatus item, 'failed'
 
           $http(
-            url: note.downloadUrl
+            url: item.downloadUrl
             method: 'GET'
             responseType: 'blob')
             .success (fileContents, status, headers) ->
-              disposition = headers('Content-Disposition')
-              filenameMatch = /^attachment; filename=\"(.+)\"$/.exec disposition
+              filename = if item.filename?
+                item.filename
+              else
+                disposition = headers('Content-Disposition')
+                filenameMatch = /^attachment; filename=\"(.+)\"$/.exec disposition
 
-              filename = "#{paddedIndex} - #{filenameMatch[1]}"
+                filenameMatch[1]
+
+              filename = paddedIndex + ' - ' + filename
               
               directory.getFile filename, { create: true}, ((file) ->
                 file.createWriter ((writer) ->
-                  writer.onerror = errorHandler
-                  writer.onwrite = ->
-                    $scope.downloadStatus[note.index] = 'complete'
+                  writer.onerror = error
+                  writer.onwrite = setStatus item, 'complete'
                   writer.write fileContents
-                  ), errorHandler), errorHandler
-            .error errorHandler
+                  ), error), error
+            .error error
+
+AuthController = (cateService, $scope) ->
+  $scope.authenticated = null
+  $scope.check = ->
+     cateService.checkAuth().then (authenticated) ->
+      $scope.authenticated = authenticated
+  $scope.check()
 
 angular.module("cate.controllers", [])
+  .controller("authController", ['cateService', '$scope', AuthController])
   .controller("headerController", ['cateService', '$scope', '$location', '$routeParams', HeaderController])
-  .controller("timelineController", ['$routeParams', 'cateService', '$scope', TimelineController])
   .controller("coursesController", ['$routeParams', 'cateService', '$scope', CoursesController])
   .controller("courseController", ['cateService', '$http', '$scope', CourseController])
+  .controller("downloadsController", ['$http', '$scope', DownloadsController])

@@ -5,6 +5,12 @@ class CateService
     @defaultData = null
     @cachedCourses = undefined
 
+  checkAuth: ->
+    @$http(
+      url: CATE_BASE
+      method: 'HEAD'
+    ).then (-> true), (-> false)
+
   getPage: (path, params) ->
     @$http
       url: CATE_BASE + path
@@ -236,7 +242,7 @@ class CateService
                     else
                       eventInfoText = eventLink.text()
                     if eventLink.length
-                      event.specLink = eventLink.attr('href')
+                      event.specUrl = CATE_BASE + '/' + eventLink.attr('href')
 
                     [ event.index, event.type ] = eventInfoText.split(':')
 

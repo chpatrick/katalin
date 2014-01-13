@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="css/app.css"/>
   <link rel="stylesheet" href="css/bootstrap.min.css"/>
 </head>
-<body>
+<body ng-controller="authController">
   
   <nav class="navbar navbar-default" role="navigation" ng-controller="headerController">
     <!-- Brand and toggle get grouped for better mobile display -->
@@ -20,20 +20,22 @@
       <a class="navbar-brand" href="#">CATE</a>
     </div>
 
-    <!-- Collect the nav links, forms, and other content for toggling -->
-    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+    <div class="collapse navbar-collapse">
       <ul class="nav navbar-nav">
-      <li ng-class="{active: mode == 'timeline'}" ng-click="setMode('timeline')"><a href="">Timeline</a></li>
       <li ng-class="{active: mode == 'courses'}" ng-click="setMode('courses')"><a href="">Notes</a></li>
       </ul>
-      <form class="navbar-form navbar-right">
+      <form class="navbar-form navbar-right" ng-if="authenticated">
         <select ng-model="year" ng-options="year + '-' + (year * 1 + 1) for year in availableYears" class="form-control"></select>
         <select ng-model="clazz" ng-options="class.code as class.name group by class.degree for class in availableClasses" class="form-control"></select>
       </form>
     </div><!-- /.navbar-collapse -->
   </nav>
 
-  <div ng-view></div>
+  <div ng-if="authenticated" ng-view></div>
+  <div ng-if="authenticated === false" class="jumbotron">
+    <p>It looks like you're not logged in to CATE. Please <a href="https://cate.doc.ic.ac.uk" target="_blank">log in</a> using Chrome and try again.</p>
+    <p><a class="btn btn-primary btn-lg" role="button" ng-click="check()">Try again</a></p>
+  </div>
 
   <!-- In production use:
   <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>

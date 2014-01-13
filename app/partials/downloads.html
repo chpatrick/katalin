@@ -1,0 +1,33 @@
+  <!--
+  <li ng-repeat="item in items" value="{{ item.index }}">
+    <span class="download-title">{{ item.title }}</span>
+    <div ng-switch="item.type" class="download-commands">
+      <div ng-switch-when="pdf">
+        <a href="" ng-click="view(item)">view</a>
+        <a href="" ng-click="download(item)">download</a>
+        <span class="download-status"
+          ng-class="{ 'download-downloading': downloadStatus[item.index] == 'downloading', 'download-failed': downloadStatus[item.index] == 'failed', 'download-complete': downloadStatus[item.index] == 'complete'}"
+        >{{ downloadStatus[item.index] }}</span>
+      </div>
+      <div ng-switch-when="URL*">
+        <a href="{{ item.visitUrl }}" target="_blank">visit</a>
+      </div>
+    </div>
+  </li>
+</ol>
+-->
+<table>
+  <tr ng-repeat="item in items" value="{{ item.index }}">
+    <td ng-if="item.type == 'pdf'" class="download-command-cell"><a href="" ng-click="view(item)">view</a></td>
+    <td ng-if="item.type == 'pdf'" class="download-command-cell"><a href="" ng-click="download(item)">download</a></td>
+    <td ng-if="item.type == 'URL*'" class="download-command-cell"><a href="{{ item.visitUrl }}">visit</a></td>
+    <td class="download-index-cell">{{ item.index }}. </td>
+    <td>{{ item.title }}</td>
+    <td class="download-status"
+          ng-class="{ 'download-downloading': downloadStatus[item.index] == 'downloading', 'download-failed': downloadStatus[item.index] == 'failed', 'download-complete': downloadStatus[item.index] == 'complete'}"
+        >{{ downloadStatus[item.index] }}</td>
+  </tr>
+</table>
+<div class="course-commands">
+  <a href="" ng-click="downloadAll()">download all</a>
+</div>

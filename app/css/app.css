@@ -1,15 +1,16 @@
 /* app css stylesheet */
 
-.note-commands {
-  display: inline-block;
+#course-list > li {
+  list-style-type: none;
 }
 
-.note-title {
+.download-title {
   font-weight: bold;
 }
 
 .course-title {
   font-weight: bold;
+  font-size: 18pt;
 }
 
 html {
@@ -22,6 +23,7 @@ html {
 
 .download-status {
   font-weight: bold;
+  padding-left: 20px;
 }
 
 .download-downloading {
@@ -34,4 +36,21 @@ html {
 
 .download-complete {
   color: green;
+}
+
+.course-item {
+  margin-bottom: 15px;
+}
+
+.download-command-cell {
+  padding-right: 5px;
+}
+
+.download-command-cell > a {
+  font-weight: bold;
+}
+
+.download-index-cell {
+  text-align: right;
+  padding: 0 4px 0 20px;
 }

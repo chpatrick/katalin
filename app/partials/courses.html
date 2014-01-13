@@ -1,26 +1,13 @@
-<ul>
-  <li ng-repeat="course in courses | orderBy:['-subscribed', 'title']" ng-controller="courseController">
+<ul id="course-list">
+  <li ng-repeat="course in courses | orderBy:['-subscribed', 'title']" ng-controller="courseController" class="course-item">
     <a href="" class="course-title" ng-click="loadNotes()">{{ course.title }}</a>
     <div ng-if="notes.length">
-      <ol>
-        <li ng-repeat="note in notes" value="{{ note.index }}">
-          <span class="note-title">{{ note.title }}</span>
-          <div ng-switch="note.type" class="note-commands">
-            <div ng-switch-when="pdf">
-              <a href="{{ note.downloadUrl }}">download</a>
-              <span class="download-status"
-                ng-class="{ 'download-downloading': downloadStatus[note.index] == 'downloading', 'download-failed': downloadStatus[note.index] == 'failed', 'download-complete': downloadStatus[note.index] == 'complete'}"
-              >{{ downloadStatus[note.index] }}</span>
-            </div>
-            <div ng-switch-when="URL*">
-              <a href="{{ note.visitUrl }}">visit</a>
-            </div>
-          </div>
-        </li>
-      </ol>
-      <div class="course-commands">
-        <a href="" ng-click="downloadAll()">download all</a>
-      </div>
+      <h4>Notes</h4>
+      <div downloads items="notes" ng-if="notes.length"></div>
+    </div>
+    <div ng-if="exercises.length">
+      <h4>Exercises</h4>
+      <div downloads items="exercises"></div>
     </div>
   </li>
 </ul>

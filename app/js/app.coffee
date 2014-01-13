@@ -7,10 +7,6 @@ angular.module("cate",
     "cate.controllers"
   ])
   .config [ "$routeProvider", ($routeProvider) ->
-    $routeProvider.when "/:year/:clazz/timeline",
-      templateUrl: "partials/timeline.html"
-      controller: "timelineController"
-
     $routeProvider.when "/:year/:clazz/courses",
       templateUrl: "partials/courses.html"
       controller: "coursesController"
