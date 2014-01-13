@@ -6,11 +6,14 @@
   "version": "1.0",
 
   "permissions": [
-    "https://cate.doc.ic.ac.uk/"
+    "https://cate.doc.ic.ac.uk/",
+    {"fileSystem": ["write", "directory"]} 
   ],
   "app": {
-    "launch": {
-      "local_path": "index.html"
+    "background": {
+      "scripts": [
+        "background.js"
+      ]
     }
   }
 }

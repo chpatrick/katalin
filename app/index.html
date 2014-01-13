@@ -24,7 +24,7 @@
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
       <li ng-class="{active: mode == 'timeline'}" ng-click="setMode('timeline')"><a href="">Timeline</a></li>
-      <li ng-class="{active: mode == 'courses'}" ng-click="setMode('courses')"><a href="">Courses</a></li>
+      <li ng-class="{active: mode == 'courses'}" ng-click="setMode('courses')"><a href="">Notes</a></li>
       </ul>
       <form class="navbar-form navbar-right">
         <select ng-model="year" ng-options="year + '-' + (year * 1 + 1) for year in availableYears" class="form-control"></select>

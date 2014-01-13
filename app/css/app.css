@@ -1,30 +1,37 @@
 /* app css stylesheet */
 
-.menu {
-  list-style: none;
-  border-bottom: 0.1em solid black;
-  margin-bottom: 2em;
-  padding: 0 0 0.5em;
+.note-commands {
+  display: inline-block;
 }
 
-.menu:before {
-  content: "[";
+.note-title {
+  font-weight: bold;
 }
 
-.menu:after {
-  content: "]";
+.course-title {
+  font-weight: bold;
 }
 
-.menu > li {
-  display: inline;
+html {
+  overflow-y: auto;
 }
 
-.menu > li:before {
-  content: "|";
-  padding-right: 0.3em;
+.course-commands a {
+  font-weight: bold;
 }
 
-.menu > li:nth-child(1):before {
-  content: "";
-  padding: 0;
+.download-status {
+  font-weight: bold;
+}
+
+.download-downloading {
+  color: blue;
+}
+
+.download-failed {
+  color: red;
+}
+
+.download-complete {
+  color: green;
 }

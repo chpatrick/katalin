@@ -16,9 +16,7 @@ class CateService
     if @defaultData?
       @$q.when @defaultData
     else
-      service = this
-
-      @getPage('/').then (response) ->
+      @getPage('/').then (response) =>
         data = {}
 
         doc = response.data
@@ -36,7 +34,13 @@ class CateService
           if match? then match[1] else null).toArray()
         data.availableYears.unshift data.currentYear
 
-        service.defaultData = data
+        @defaultData = data
+
+  getUsername: ->
+    @getDefaultData().then (defaultData) -> defaultData.username
+
+  getAvailableYears: ->
+    @getDefaultData().then (data) -> data.availableYears
 
   getAvailableClasses: ->
     courses = []
@@ -108,12 +112,11 @@ class CateService
     'December': 12
 
   parseTimetablePage: (year, clazz, period) ->
-    service = this
-    service.getDefaultData().then (defaultData) ->
-      service.getPage('/timetable.cgi', {
+    @getUsername().then (username) =>
+      @getPage('/timetable.cgi', {
         period: period,
         class: clazz,
-        keyt: "#{year}:none:none:#{defaultData.username}"
+        keyt: "#{year}:none:none:#{username}"
       }).then (response) ->
         doc = response.data
 
@@ -249,8 +252,7 @@ class CateService
     if @cachedCourses? and @cachedCourses.year is year and @cachedCourses.clazz is clazz
       @$q.when @cachedCourses.courses
     else
-      service = this
-      @$q.all(@parseTimetablePage(year, clazz, period) for period in [1..7]).then (results) ->
+      @$q.all(@parseTimetablePage(year, clazz, period) for period in [1..7]).then (results) =>
         courses = {}
 
         for result in results
@@ -261,17 +263,36 @@ class CateService
             else
               courses[courseCode] = course
 
-        service.cachedCourses =
+        @cachedCourses =
           year: year
           clazz: clazz
 
         # convert hashes to arrays
-        service.cachedCourses.courses = for courseCode, course of courses
+        @cachedCourses.courses = for courseCode, course of courses
           arrayEvents = []
           for eventIndex, event of course.events
             arrayEvents.push event
           course.events = arrayEvents
           course
+
+  getNotes: (year, notesUrl) ->
+    @getPage('/' + notesUrl).then (response) ->
+      doc = response.data
+
+      $('form table tbody tr:gt(1)', doc).map ->
+        note =
+          index: $('td:eq(0)', this).text() * 1
+          title: $('td:eq(1)', this).text()
+          type: $('td:eq(2)', this).text()
+
+        switch note.type
+          when 'URL*'
+            # again most of the key values aren't needed
+            identifierMatch = /clickpage\((\d+)\)/.exec($('td:eq(1) a', this).attr('onclick'))
+            note.visitUrl = "#{CATE_BASE}/showfile.cgi?key=#{year}:0:#{identifierMatch[1]}:0:NOTES:0"
+          else
+            note.downloadUrl = CATE_BASE + '/' + $('td:eq(1) a', this).attr('href')
+        note
 
 angular.module('cate.services', [])
   .service('cateService', ['$http', '$q', CateService])
